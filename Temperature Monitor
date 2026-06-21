@@ -1,0 +1,130 @@
+// ============================================
+// Project 3: Temperature Monitor
+// Platform : Arduino Uno (Wokwi Simulator)
+// ============================================
+// Behavior:
+// Potentiometer simulates temperature sensor
+// LCD shows real time temperature + status
+// LED turns ON  above 40°C (warning)
+// Buzzer beeps  above 50°C (danger)
+// Serial logs all data via UART
+// ============================================
+
+#include <LiquidCrystal_I2C.h>
+
+// ── Pin Definitions ──────────────────────────
+#define SENSOR_PIN    A0  // Potentiometer → analog pin A0
+#define LED_PIN        9  // Warning LED
+#define BUZZER_PIN     8  // Danger buzzer
+
+// ── Temperature Thresholds ───────────────────
+#define TEMP_LED_ON      40   // LED ON above this
+#define TEMP_BUZZER_ON   50   // Buzzer ON above this
+
+// ── LCD Setup (I2C address 0x27) ─────────────
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// ── Global Variables ─────────────────────────
+float temperature    = 0.0;
+int   rawValue       = 0;
+unsigned long lastReadTime = 0;
+
+// ============================================
+// setup() — runs ONCE at startup
+// ============================================
+void setup() {
+  pinMode(LED_PIN,    OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // Make sure both OFF at start
+  digitalWrite(LED_PIN,    LOW);
+  digitalWrite(BUZZER_PIN, LOW);
+
+  // Start LCD
+  lcd.init();
+  lcd.backlight();
+
+  // Welcome message on LCD
+  lcd.setCursor(0, 0);
+  lcd.print("  Temp Monitor  ");
+  lcd.setCursor(0, 1);
+  lcd.print("  Starting...   ");
+
+  // Start Serial
+  Serial.begin(9600);
+  Serial.println("==============================");
+  Serial.println("  Temperature Monitor Started ");
+  Serial.println("  Turn pot to change temp     ");
+  Serial.println("==============================");
+
+  delay(2000);
+  lcd.clear();
+}
+
+// ============================================
+// loop() — runs FOREVER after setup()
+// ============================================
+void loop() {
+
+  // Read sensor every 500ms
+  if (millis() - lastReadTime >= 500) {
+    lastReadTime = millis();
+
+    // ── STEP 1: Read raw ADC value ───────────
+    rawValue = analogRead(SENSOR_PIN);
+
+    // ── STEP 2: Map ADC to temperature ───────
+    // Potentiometer: 0 (left) = 0°C, 1023 (right) = 100°C
+    temperature = map(rawValue, 0, 1023, 0, 100);
+
+    // ── STEP 3: Serial Monitor output ────────
+    Serial.print("Raw ADC: ");
+    Serial.print(rawValue);
+    Serial.print(" | Temp: ");
+    Serial.print(temperature, 0);
+    Serial.print(" C | LED: ");
+    Serial.print(temperature > TEMP_LED_ON ? "ON" : "OFF");
+    Serial.print(" | Buzzer: ");
+    Serial.print(temperature > TEMP_BUZZER_ON ? "ON" : "OFF");
+    Serial.print(" | Status: ");
+    if (temperature > TEMP_BUZZER_ON)
+      Serial.println("!! DANGER !!");
+    else if (temperature > TEMP_LED_ON)
+      Serial.println("WARNING!");
+    else
+      Serial.println("Normal");
+
+    // ── STEP 4: LCD Row 1 — Temperature ──────
+    lcd.setCursor(0, 0);
+    lcd.print("Temp: ");
+    lcd.print(temperature, 0);
+    lcd.print(" C      ");
+
+    // ── STEP 5: LCD Row 2 — Status ───────────
+    lcd.setCursor(0, 1);
+    if (temperature > TEMP_BUZZER_ON) {
+      lcd.print("!! DANGER !!    ");
+    } else if (temperature > TEMP_LED_ON) {
+      lcd.print("WARNING! Hot!   ");
+    } else {
+      lcd.print("Status: Normal  ");
+    }
+
+    // ── STEP 6: LED Control ───────────────────
+    if (temperature > TEMP_LED_ON) {
+      digitalWrite(LED_PIN, HIGH);    // LED ON
+    } else {
+      digitalWrite(LED_PIN, LOW);     // LED OFF
+    }
+
+    // ── STEP 7: Buzzer Control ────────────────
+    if (temperature > TEMP_BUZZER_ON) {
+      digitalWrite(BUZZER_PIN, HIGH);
+      delay(200);
+      digitalWrite(BUZZER_PIN, LOW);
+      delay(200);
+    } else {
+      digitalWrite(BUZZER_PIN, LOW);
+    }
+  }
+}
