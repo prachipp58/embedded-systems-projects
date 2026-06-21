@@ -27,26 +27,5 @@ Embedded Systems projects built using Arduino on Wokwi Simulator
 - Non-blocking timer using millis()
 - Serial UART communication
 
-## Serial Monitor Output
-==============================
-   LED Button Control Ready   
-==============================
-Button Pressed!
-Button Released!
-Button Pressed!
-Button Released!
-Button Pressed!
-Button Released!
-Button Pressed!
-Button Released!
-Button Pressed!
-Button Released!
-Button Pressed!
-Button Released!
-Button Pressed!
-Button Released!
-Button Pressed!
-Fast Blink Mode!
-Button Released!
 ## 🔗 Live Simulation
-[▶ Run on Wokwi]([paste your wokwi link here](https://wokwi.com/projects/467442347721820161))
+[▶ Run on Wokwi](https://wokwi.com/projects/467442347721820161)
