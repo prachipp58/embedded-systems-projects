@@ -1,0 +1,87 @@
+// ============================================
+// Project 1: LED Button Control
+// Platform : Arduino Uno (Wokwi Simulator)
+// ============================================
+// Behavior:
+// Button NOT pressed → LED OFF
+// Button pressed     → LED ON solid
+// Button held > 1s   → LED blinks fast
+// Button released    → LED OFF
+// ============================================
+
+// ── Pin Definitions ──────────────────────────
+#define LED_PIN     13   // LED connected to pin 13
+#define BUTTON_PIN   2   // Button connected to pin 2
+
+// ── Global Variables (Flags) ─────────────────
+unsigned long pressStartTime   = 0;     // when button was first pressed
+bool isPressed                 = false; // is button currently held?
+bool blinkModeNotified         = false; // did we print blink message?
+
+// ============================================
+// setup() — runs ONCE at startup
+// ============================================
+void setup() {
+  pinMode(LED_PIN,    OUTPUT);  // Pin 13 = sends signal (LED)
+  pinMode(BUTTON_PIN, INPUT);   // Pin 2  = receives signal (Button)
+
+  digitalWrite(LED_PIN, LOW);   // make sure LED is OFF at start
+
+  Serial.begin(9600);           // start serial communication
+  Serial.println("==============================");
+  Serial.println("   LED Button Control Ready   ");
+  Serial.println("==============================");
+}
+
+// ============================================
+// loop() — runs FOREVER after setup()
+// ============================================
+void loop() {
+
+  // Read button state every loop
+  int buttonState = digitalRead(BUTTON_PIN);
+
+  // ── BUTTON IS PRESSED ──────────────────────
+  if (buttonState == HIGH) {
+
+    // First time detecting press
+    if (!isPressed) {
+      isPressed      = true;
+      pressStartTime = millis();  // record press start time
+      Serial.println("Button Pressed!");
+    }
+
+    // Calculate how long button is held
+    unsigned long heldTime = millis() - pressStartTime;
+
+    // Held LESS than 1 second → LED ON solid
+    if (heldTime < 1000) {
+      digitalWrite(LED_PIN, HIGH);
+    }
+
+    // Held MORE than 1 second → LED blinks fast
+    else {
+      // Print message only once
+      if (!blinkModeNotified) {
+        Serial.println("Fast Blink Mode!");
+        blinkModeNotified = true;
+      }
+      // Blink LED
+      digitalWrite(LED_PIN, HIGH);
+      delay(100);
+      digitalWrite(LED_PIN, LOW);
+      delay(100);
+    }
+  }
+
+  // ── BUTTON IS NOT PRESSED ──────────────────
+  else {
+    // Just released button
+    if (isPressed) {
+      Serial.println("Button Released!");
+      isPressed         = false;  // reset flag
+      blinkModeNotified = false;  // reset flag
+    }
+    digitalWrite(LED_PIN, LOW);   // LED OFF
+  }
+}
